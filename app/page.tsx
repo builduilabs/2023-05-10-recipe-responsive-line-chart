@@ -1,113 +1,211 @@
-import Image from "next/image";
+import * as d3 from "d3";
+import { format } from "date-fns";
+import { CSSProperties } from "react";
 
-export default function Home() {
+export default function Page() {
+  let data = sales.map((d) => ({ ...d, date: new Date(d.date) }));
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+    <div className="relative w-full grid grid-cols-12 gap-x-3 gap-y-10 md:gap-x-12 px-2 py-6 md:gap-y-16 md:p-8">
+      <div className="col-span-12 h-32 md:h-40">
+        <Chart data={data} />
+      </div>
+      <div className="h-32 md:h-40 col-span-6 md:col-span-4 block">
+        <Chart data={data} />
+      </div>
+      <div className="h-32 md:h-40 hidden col-span-4 md:block">
+        <Chart data={data} />
+      </div>
+      <div className="h-32 md:h-40 col-span-6 md:col-span-4 col-start-auto block">
+        <Chart data={data} />
+      </div>
+    </div>
+  );
+}
+
+let sales = [
+  { date: "2023-04-30T12:00:00.00+00:00", value: 4 },
+  { date: "2023-05-01T12:00:00.00+00:00", value: 6 },
+  { date: "2023-05-02T12:00:00.00+00:00", value: 8 },
+  { date: "2023-05-03T12:00:00.00+00:00", value: 7 },
+  { date: "2023-05-04T12:00:00.00+00:00", value: 10 },
+  { date: "2023-05-05T12:00:00.00+00:00", value: 12 },
+  { date: "2023-05-06T12:00:00.00+00:00", value: 4 },
+];
+
+function Chart({ data }: { data: { value: number; date: Date }[] }) {
+  let xScale = d3
+    .scaleTime()
+    .domain([data[0].date, data[data.length - 1].date])
+    .range([0, 100]);
+  let yScale = d3
+    .scaleLinear()
+    .domain([0, d3.max(data.map((d) => d.value)) ?? 0])
+    .range([100, 0]);
+
+  let line = d3
+    .line<(typeof data)[number]>()
+    .x((d) => xScale(d.date))
+    .y((d) => yScale(d.value));
+
+  let d = line(data);
+
+  if (!d) {
+    return null;
+  }
+
+  return (
+    <div
+      className="relative h-full w-full @container"
+      style={
+        {
+          "--marginTop": "6px",
+          "--marginRight": "8px",
+          "--marginBottom": "25px",
+          "--marginLeft": "25px",
+          "--marginTopLg": "6px",
+          "--marginRightLg": "8px",
+          "--marginBottomLg": "30px",
+          "--marginLeftLg": "30px",
+        } as CSSProperties
+      }
+    >
+      {/* X axis */}
+      <svg
+        className="absolute inset-0
+          h-[calc(100%-var(--marginTop))]
+          w-[calc(100%-var(--marginLeft)-var(--marginRight))]
+          translate-x-[var(--marginLeft)]
+          translate-y-[var(--marginTop)]
+          overflow-visible
+          lg:h-[calc(100%-var(--marginTopLg))]
+          lg:w-[calc(100%-var(--marginLeftLg)-var(--marginRightLg))]
+          lg:translate-x-[var(--marginLeftLg)]
+          lg:translate-y-[var(--marginTopLg)] 
+        "
+      >
+        {data.map((day, i) => (
+          <g key={i} className="overflow-visible font-medium text-gray-400">
+            <text
+              x={`${xScale(day.date)}%`}
+              y="100%"
+              textAnchor={
+                i === 0 ? "start" : i === data.length - 1 ? "end" : "middle"
+              }
+              fill="currentColor"
+              className="hidden text-sm @lg:inline"
+            >
+              {format(day.date, "EEE")}
+            </text>
+            <text
+              x={`${xScale(day.date)}%`}
+              y="100%"
+              textAnchor={
+                i === 0 ? "start" : i === data.length - 1 ? "end" : "middle"
+              }
+              fill="currentColor"
+              className="text-xs @lg:hidden"
+            >
+              {format(day.date, "EEEEE")}
+            </text>
+          </g>
+        ))}
+      </svg>
+
+      {/* Y axis */}
+      <svg
+        className="absolute inset-0
+          h-[calc(100%-var(--marginTop)-var(--marginBottom))]
+          translate-y-[var(--marginTop)]
+          overflow-visible
+          lg:h-[calc(100%-var(--marginTopLg)-var(--marginBottomLg))]
+          lg:translate-y-[var(--marginTopLg)]
+        "
+      >
+        <g className="translate-x-4">
+          {yScale
+            .ticks(8)
+            .map(yScale.tickFormat(8, "d"))
+            .map((value, i) => (
+              <text
+                key={i}
+                y={`${yScale(+value)}%`}
+                alignmentBaseline="middle"
+                textAnchor="end"
+                className="text-xs tabular-nums text-gray-600"
+                fill="currentColor"
+              >
+                {value}
+              </text>
+            ))}
+        </g>
+      </svg>
+
+      {/* Chart area */}
+      <svg
+        className="absolute inset-0
+          h-[calc(100%-var(--marginTop)-var(--marginBottom))]
+          w-[calc(100%-var(--marginLeft)-var(--marginRight))]
+          translate-x-[var(--marginLeft)]
+          translate-y-[var(--marginTop)]
+          overflow-visible
+          lg:h-[calc(100%-var(--marginTopLg)-var(--marginBottomLg))]
+          lg:w-[calc(100%-var(--marginLeftLg)-var(--marginRightLg))]
+          lg:translate-x-[var(--marginLeftLg)]
+          lg:translate-y-[var(--marginTopLg)]
+        "
+      >
+        <svg
+          viewBox="0 0 100 100"
+          className="overflow-visible"
+          preserveAspectRatio="none"
+        >
+          {/* Grid lines */}
+          {yScale
+            .ticks(8)
+            .map(yScale.tickFormat(8, "d"))
+            .map((active, i) => (
+              <g
+                transform={`translate(0,${yScale(+active)})`}
+                className="text-gray-700"
+                key={i}
+              >
+                <line
+                  x1={0}
+                  x2={100}
+                  stroke="currentColor"
+                  strokeDasharray="6,5"
+                  strokeWidth={0.5}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
+            ))}
+
+          {/* Line */}
+          <path
+            d={d}
+            fill="none"
+            className="text-gray-300"
+            stroke="currentColor"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Circles */}
+          {data.map((d) => (
+            <path
+              key={d.date.toString()}
+              d={`M ${xScale(d.date)} ${yScale(d.value)} l 0.0001 0`}
+              vectorEffect="non-scaling-stroke"
+              strokeWidth="8"
+              strokeLinecap="round"
+              fill="none"
+              stroke="currentColor"
+              className="text-gray-300"
             />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+          ))}
+        </svg>
+      </svg>
+    </div>
   );
 }
